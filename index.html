@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frig AI Desktop Companion</title>
+    <style>
+        :root {
+            --bg-color: #11111b;
+            --panel-color: #1e1e2e;
+            --sidebar-color: #181825;
+            --text-color: #cdd6f4;
+            --accent-color: #89b4fa;
+            --green-color: #a6e3a1;
+            --frig-gradient: linear-gradient(45deg, #b4befe, #89b4fa);
+            --frig-eye-color: #11111b;
+            --frig-glow: rgba(137, 180, 250, 0.4);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex; height: 100vh; overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px; background: var(--sidebar-color);
+            border-right: 1px solid #313244; padding: 20px;
+            display: flex; flex-direction: column; gap: 14px;
+            overflow-y: auto; box-sizing: border-box;
+        }
+
+        .main-content {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+
+        .companion-container {
+            width: 380px; background: var(--panel-color);
+            border-radius: 16px; padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            border: 1px solid #313244; text-align: center;
+        }
+    </style>
+</head>
+    <style>
+        .avatar {
+            width: 90px; height: 90px;
+            background: var(--frig-gradient); border-radius: 50%;
+            margin: 0 auto 15px auto; position: relative;
+            box-shadow: 0 0 25px var(--frig-glow);
+            animation: float 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .eyes {
+            display: flex; justify-content: space-between;
+            width: 44px; position: absolute; top: 38px; left: 23px;
+        }
+
+        .eye {
+            width: 10px; height: 10px;
+            background: var(--frig-eye-color); border-radius: 50%;
+            animation: blink 4s infinite; transition: all 0.2s ease;
+        }
+
+        .chat-box {
+            height: 180px; overflow-y: auto; border-radius: 8px;
+            background: #11111b; padding: 12px; margin-bottom: 15px;
+            text-align: left; font-size: 14px; border: 1px solid #313244;
+        }
+
+        .msg { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; max-width: 85%; line-height: 1.4; }
+        .user-msg { background: #45475a; color: white; margin-left: auto; text-align: right; }
+        .ai-msg { background: #313244; color: var(--accent-color); }
+
+        .input-area { display: flex; gap: 8px; }
+        input, select {
+            flex: 1; padding: 10px; border-radius: 8px;
+            border: 1px solid #45475a; background: #11111b;
+            color: white; outline: none;
+        }
+        
+        .sidebar button, .input-area button {
+            padding: 10px 16px; background: var(--accent-color);
+            color: #11111b; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; width: 100%;
+            box-sizing: border-box; margin-bottom: 4px;
+        }
+        .input-area button { width: auto; margin-bottom: 0; }
+        .sidebar button:hover, .input-area button:hover { background: var(--green-color); }
+
+        .stat-card {
+            background: var(--panel-color); padding: 12px;
+            border-radius: 8px; border: 1px solid #313244;
+            font-size: 14px; text-align: left;
+        }
+        .stat-val { font-size: 18px; font-weight: bold; color: var(--accent-color); margin-top: 4px; }
+
+        .accessory-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%;
+        }
+        .acc-btn {
+            background: #313244 !important; color: white !important;
+            font-size: 12px !important; padding: 8px !important; border-radius: 6px !important;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+        .thinking { animation: pulse 0.5s infinite alternate; }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.04); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR CONTROL MODULES -->
+    <div class="sidebar" id="sidebar">
+        <h3 style="color: var(--accent-color); margin-top: 0; margin-bottom:5px;">Frig Plan Hub</h3>
+        <div class="stat-card">
+            <div>Active Tier:</div>
+            <div id="tierName" class="stat-val">Free Tier</div>
+        </div>
+        <div class="stat-card">
+            <div>Weekly Credits:</div>
+            <div id="creditDisplay" class="stat-val">100 / 100</div>
+        </div>
+        <label style="font-size: 13px; margin-top: 5px; display: block;">Change Plan:</label>
+        <select id="tierSelect" onchange="updateTier()">
+            <option value="free">Free Tier (€0) - 100cr</option>
+            <option value="essentials">Essentials Tier (€3.50) - 250cr</option>
+            <option value="standard">Standard Tier (€5.00) - 500cr</option>
+            <option value="advanced">Advanced Tier (€7.00) - 550cr</option>
+            <option value="pro">Pro Tier (€9.00) - 800cr</option>
+            <option value="premium">Premium Tier (€12.00) - 1000cr</option>
+            <option value="ultimate">Ultimate Tier (€15.00) - 1500cr</option>
+        </select>
+        <h4 style="margin: 10px 0 5px 0; color: var(--green-color);">Simulate Tools (10 cr):</h4>
+        <button onclick="useTool('Basic Chat')">Run Chat Tool</button>
+        <button onclick="useTool('Email management')">Run Email Tool</button>
+        <h4 style="margin: 10px 0 5px 0; color: #fab387;">Accessories Studio (€7.00):</h4>
+        <div class="accessory-grid">
+            <button class="acc-btn" onclick="applyAccessory('classic')">Classic Blue</button>
+            <button class="acc-btn" onclick="applyAccessory('neon')" style="background:#f5e0dc !important; color:#11111b !important;">Neon Pink</button>
+            <button class="acc-btn" onclick="applyAccessory('cyber')" style="background:#a6e3a1 !important; color:#11111b !important;">Cyber Green</button>
+            <button class="acc-btn" onclick="applyAccessory('shadow')" style="background:#585b70 !important; color:white !important;">Shadow Core</button>
+        </div>
+        <div style="font-size: 11px; color: #a6adc8; line-height: 1.2; margin-top: 5px; text-align: left;">* Included free in Premium & Ultimate tiers!</div>
+        <h4 style="margin: 10px 0 5px 0; color: #f38ba8;">Top-Up Store:</h4>
+        <button style="background: #313244; color: white; font-size:12px; padding:6px;" onclick="topUp(100)">Small Pack (+100) €0.90</button>
+        <button style="background: #313244; color: white; font-size:12px; padding:6px;" onclick="topUp(500)">Standard Pack (+500) €4.50</button>
+    </div>
+
+    <!-- MAIN CHAT PLATFORM CONTAINER -->
+    <div class="main-content">
+        <div class="companion-container">
+            <div class="avatar" id="avatar">
+                <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+            </div>
+            <h2 id="companionTitle">Frig AI Workspace</h2>
+            <div id="featureList" style="color:var(--green-color)">Online Cloud Brain Connected</div>
+            <div class="chat-box" id="chatBox">
+                <div class="msg ai-msg">Frig Cloud Matrix active. Let's run a test! Ask me absolutely anything.</div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Type a message..." onkeypress="handleKey(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const tiers = {
+            free: { name: "Free Tier", maxCredits: 100, title: "Frig Simple", features: "Basic tools, Essentials tier ready" },
+            essentials: { name: "Essentials Tier", maxCredits: 250, title: "Frig Simple", features: "Essential tools" },
+            standard: { name: "Standard Tier", maxCredits: 500, title: "Frig Standard", features: "Standard tools, Email management" },
+            advanced: { name: "Advanced Tier", maxCredits: 550, title: "Frig Advanced", features: "Advanced tools, Email management" },
+            pro: { name: "Pro Tier", maxCredits: 800, title: "Frig Pro", features: "Pro tools, Email management, 14 days safety check" },
+            premium: { name: "Premium Tier", maxCredits: 1000, title: "Frig Premium", features: "Premium tools, Email management, Personalised Accessories unlocked!" },
+            ultimate: { name: "Ultimate Tier", maxCredits: 1500, title: "Frig Ultimate", features: "Ultimate tools, Email management, Unlimited Personalised Accessories!" }
+        };
+
+        let currentTier = "free";
+        let credits = 100;
+
+        function handleKey(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function updateTier() {
+            currentTier = document.getElementById('tierSelect').value;
+            credits = tiers[currentTier].maxCredits;
+            document.getElementById('tierName').innerText = tiers[currentTier].name;
+            document.getElementById('companionTitle').innerText = tiers[currentTier].title;
+            document.getElementById('featureList').innerText = tiers[currentTier].features;
+            updateCreditDisplay();
+            appendMessage("System: Shifted configuration matrix to " + tiers[currentTier].name + ".", "ai-msg");
+        }
+
+        function updateCreditDisplay() {
+            document.getElementById('creditDisplay').innerText = credits + " / " + tiers[currentTier].maxCredits;
+        }
+
+        function useTool(toolName) {
+            if (toolName === 'Email management' && (currentTier === 'free' || currentTier === 'essentials')) {
+                appendMessage("System Error: Email Management tools require Standard Tier or higher!", "ai-msg");
+                return;
+            }
+            if (credits >= 10) {
+                credits -= 10; updateCreditDisplay();
+                const avatar = document.getElementById('avatar');
+                avatar.classList.add('thinking');
+                setTimeout(function() {
+                    appendMessage("Successfully executed local [" + toolName + "] script routine. (-10 credits)", "ai-msg");
+                    avatar.classList.remove('thinking');
+                }, 500);
+            } else { appendMessage("System Error: Insufficient credits.", "ai-msg"); }
+        }
+
+        function applyAccessory(style) {
+            const root = document.documentElement;
+            if (style === 'classic') {
+                root.style.setProperty('--frig-gradient', 'linear-gradient(45deg, #b4befe, #89b4fa)');
+                root.style.setProperty('--frig-eye-color', '#11111b');
+                appendMessage("Accessory applied: Classic Blue loaded.", "ai-msg");
+            } else if (style === 'neon') {
+                root.style.setProperty('--frig-gradient', 'linear-gradient(45deg, #f5e0dc, #f5c2e7)');
+                root.style.setProperty('--frig-eye-color', '#45475a');
+                appendMessage("Accessory applied: Neon Pink loaded.", "ai-msg");
+            } else if (style === 'cyber') {
+                root.style.setProperty('--frig-gradient', 'linear-gradient(45deg, #a6e3a1, #94e2d5)');
+                root.style.setProperty('--frig-eye-color', '#11111b');
+                appendMessage("Accessory applied: Cyber Green loaded.", "ai-msg");
+            } else if (style === 'shadow') {
+                root.style.setProperty('--frig-gradient', 'linear-gradient(45deg, #313244, #585b70)');
+                root.style.setProperty('--frig-eye-color', '#f38ba8');
+                appendMessage("Accessory applied: Shadow Core loaded.", "ai-msg");
+            }
+        }
+
+        function topUp(amount) {
+            credits += amount; updateCreditDisplay();
+            appendMessage("Store: Added +" + amount + " credits.", "ai-msg");
+        }
+        function sendMessage() {
+            const inputEl = document.getElementById('userInput');
+            const avatar = document.getElementById('avatar');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            const query = text.toLowerCase();
+            let cost = anyKeyword(query, ["code", "program", "script"]) ? 20 : 5;
+
+            if (credits < cost) {
+                appendMessage(text, 'user-msg'); inputEl.value = '';
+                appendMessage("AI System Error: Insufficient credits!", "ai-msg");
+                return;
+            }
+
+            appendMessage(text, 'user-msg'); inputEl.value = '';
+            avatar.classList.add('thinking'); credits -= cost; updateCreditDisplay();
+
+            // Direct unblockable live network fetch connection channel
+            var targetUrl = "https://pollinations.ai" + encodeURIComponent("You are Frig, a helpful custom desktop AI assistant. Answer accurately and very concisely: " + text);
+
+            fetch(targetUrl, { method: "GET" })
+            .then(res => { if (!res.ok) throw new Error(); return res.text(); })
+            .then(data => { appendMessage(data.trim(), 'ai-msg'); avatar.classList.remove('thinking'); })
+            .catch(() => {
+                credits += cost; updateCreditDisplay();
+                appendMessage("Frig System Notice: Network dropped. Refunded " + cost + " credits.", "ai-msg");
+                avatar.classList.remove('thinking');
+            });
+        }
+
+        function anyKeyword(str, words) { return words.some(w => str.includes(w)); }
+        function appendMessage(text, className) {
+            const chatBox = document.getElementById('chatBox');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "msg " + className; msgDiv.innerText = text;
+            chatBox.appendChild(msgDiv); chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
